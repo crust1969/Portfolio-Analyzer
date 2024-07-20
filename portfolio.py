@@ -2,15 +2,12 @@ import streamlit as st
 import yfinance as yf
 import pandas as pd
 import matplotlib.pyplot as plt
-from datetime import datetime, timedelta
+from datetime import datetime
 
 # Funktion zur Überwachung der Portfolio-Performance und KPIs
-def check_portfolio_performance(portfolio, stop_loss_limits):
+def check_portfolio_performance(portfolio, stop_loss_limits, start_date, end_date):
     tickers = list(portfolio.keys())
     investments = list(portfolio.values())
-
-    end_date = datetime.today().strftime('%Y-%m-%d')
-    start_date = (datetime.today() - timedelta(days=365)).strftime('%Y-%m-%d')
 
     # Historische Daten abrufen
     try:
@@ -75,6 +72,10 @@ default_portfolio = {
 }
 default_stop_loss = 10
 
+# Datumseingaben
+start_date = st.sidebar.date_input("Startdatum", datetime.today() - pd.DateOffset(years=1))
+end_date = st.sidebar.date_input("Enddatum", datetime.today())
+
 # Portfolio-Eingaben
 num_stocks = st.sidebar.number_input("Anzahl der Aktien im Portfolio", min_value=1, max_value=20, value=len(default_portfolio))
 for i in range(num_stocks):
@@ -87,7 +88,7 @@ for i in range(num_stocks):
 
 # Schaltfläche zum Überprüfen der Performance
 if st.sidebar.button("Portfolio überprüfen"):
-    performance, current_prices, stop_loss_alerts = check_portfolio_performance(portfolio, stop_loss_limits)
+    performance, current_prices, stop_loss_alerts = check_portfolio_performance(portfolio, stop_loss_limits, start_date, end_date)
 
     if performance is not None and current_prices is not None:
         # Plot der Portfolio-Performance
