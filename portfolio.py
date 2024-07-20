@@ -2,15 +2,19 @@ import streamlit as st
 import yfinance as yf
 import pandas as pd
 import matplotlib.pyplot as plt
+from datetime import datetime, timedelta
 
 # Funktion zur Überwachung der Portfolio-Performance und KPIs
 def check_portfolio_performance(portfolio, stop_loss_limits):
     tickers = list(portfolio.keys())
     investments = list(portfolio.values())
 
+    end_date = datetime.today().strftime('%Y-%m-%d')
+    start_date = (datetime.today() - timedelta(days=365)).strftime('%Y-%m-%d')
+
     # Historische Daten abrufen
     try:
-        data = yf.download(tickers, period='1y')['Adj Close']
+        data = yf.download(tickers, start=start_date, end=end_date)['Adj Close']
     except Exception as e:
         st.error(f"Fehler beim Abrufen der historischen Daten: {e}")
         return None, None, []
@@ -40,7 +44,7 @@ def check_portfolio_performance(portfolio, stop_loss_limits):
     current_prices = current_data.iloc[-1]
 
     # Überprüfung der Stopp-Loss-Grenzen
-    previous_prices = data.iloc[-2]
+    previous_prices = data.iloc[-1]
     stop_loss_alerts = []
     for ticker in tickers:
         current_price = current_prices[ticker]
