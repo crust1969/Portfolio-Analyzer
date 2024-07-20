@@ -8,23 +8,25 @@ from datetime import datetime
 def check_portfolio_performance(portfolio, stop_loss_limits):
     tickers = list(portfolio.keys())
     investments = list(portfolio.values())
-    stop_loss_triggers = {ticker: investments[i] * (1 - stop_loss_limits[ticker] / 100) for i, ticker in enumerate(tickers)}
 
-    # Aktuelle Daten abrufen
+    # Aktuelle und historische Daten abrufen
     data = yf.download(tickers, period='1y')['Adj Close']
-    
+
     # Normalisieren der Daten (alle Kurse starten bei 1)
     data_norm = data / data.iloc[0]
 
     # Berechnung des Portfoliowerts
     portfolio_value = data_norm.dot(investments) / data_norm.iloc[0].dot(investments)
-    
+
     # Überprüfung der Stopp-Loss-Grenzen
     current_prices = data.iloc[-1]
+    previous_prices = data.iloc[-2]
     stop_loss_alerts = []
-    for ticker, trigger in stop_loss_triggers.items():
-        if current_prices[ticker] < trigger:
-            stop_loss_alerts.append(f"Stopp-Loss erreicht für {ticker}: aktueller Preis = {current_prices[ticker]:.2f}, Trigger = {trigger:.2f}")
+    for ticker in tickers:
+        current_price = current_prices[ticker]
+        previous_price = previous_prices[ticker]
+        if (previous_price - current_price) / previous_price * 100 >= stop_loss_limits[ticker]:
+            stop_loss_alerts.append(f"Stopp-Loss erreicht für {ticker}: aktueller Preis = {current_price:.2f}, Vortagespreis = {previous_price:.2f}, Verlust = {((previous_price - current_price) / previous_price * 100):.2f}%")
     
     return portfolio_value, current_prices, stop_loss_alerts
 
