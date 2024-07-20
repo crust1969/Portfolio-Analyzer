@@ -2,7 +2,6 @@ import streamlit as st
 import yfinance as yf
 import pandas as pd
 import matplotlib.pyplot as plt
-from datetime import datetime
 
 # Funktion zur Überwachung der Portfolio-Performance und KPIs
 def check_portfolio_performance(portfolio, stop_loss_limits):
@@ -16,7 +15,7 @@ def check_portfolio_performance(portfolio, stop_loss_limits):
     data_norm = data / data.iloc[0]
 
     # Berechnung des Portfoliowerts
-    portfolio_value = data_norm.dot(investments) / data_norm.iloc[0].dot(investments)
+    portfolio_value = (data_norm * investments).sum(axis=1)
 
     # Aktuelle Daten abrufen
     current_data = yf.download(tickers, period='1d')['Adj Close']
@@ -94,3 +93,4 @@ if st.sidebar.button("Portfolio überprüfen"):
     ax.pie(sizes, labels=labels, colors=colors, autopct='%1.1f%%', startangle=140)
     ax.axis('equal')  # Equal aspect ratio ensures that pie is drawn as a circle.
     st.pyplot(fig)
+
