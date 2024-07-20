@@ -9,7 +9,7 @@ def check_portfolio_performance(portfolio, stop_loss_limits):
     tickers = list(portfolio.keys())
     investments = list(portfolio.values())
 
-    # Aktuelle und historische Daten abrufen
+    # Historische Daten abrufen
     data = yf.download(tickers, period='1y')['Adj Close']
 
     # Normalisieren der Daten (alle Kurse starten bei 1)
@@ -18,8 +18,11 @@ def check_portfolio_performance(portfolio, stop_loss_limits):
     # Berechnung des Portfoliowerts
     portfolio_value = data_norm.dot(investments) / data_norm.iloc[0].dot(investments)
 
+    # Aktuelle Daten abrufen
+    current_data = yf.download(tickers, period='1d')['Adj Close']
+    current_prices = current_data.iloc[-1]
+
     # Überprüfung der Stopp-Loss-Grenzen
-    current_prices = data.iloc[-1]
     previous_prices = data.iloc[-2]
     stop_loss_alerts = []
     for ticker in tickers:
