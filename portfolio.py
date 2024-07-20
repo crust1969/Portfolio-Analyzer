@@ -9,16 +9,34 @@ def check_portfolio_performance(portfolio, stop_loss_limits):
     investments = list(portfolio.values())
 
     # Historische Daten abrufen
-    data = yf.download(tickers, period='1y')['Adj Close']
+    try:
+        data = yf.download(tickers, period='1y')['Adj Close']
+    except Exception as e:
+        st.error(f"Fehler beim Abrufen der historischen Daten: {e}")
+        return None, None, []
+
+    # Überprüfung der Daten
+    if data.empty:
+        st.error("Keine historischen Daten verfügbar.")
+        return None, None, []
 
     # Normalisieren der Daten (alle Kurse starten bei 1)
-    data_norm = data / data.iloc[0]
+    data_norm = data.div(data.iloc[0])
 
     # Berechnung des Portfoliowerts
     portfolio_value = (data_norm * investments).sum(axis=1)
 
     # Aktuelle Daten abrufen
-    current_data = yf.download(tickers, period='1d')['Adj Close']
+    try:
+        current_data = yf.download(tickers, period='1d')['Adj Close']
+    except Exception as e:
+        st.error(f"Fehler beim Abrufen der aktuellen Daten: {e}")
+        return None, None, []
+
+    if current_data.empty:
+        st.error("Keine aktuellen Daten verfügbar.")
+        return None, None, []
+
     current_prices = current_data.iloc[-1]
 
     # Überprüfung der Stopp-Loss-Grenzen
@@ -67,30 +85,30 @@ for i in range(num_stocks):
 if st.sidebar.button("Portfolio überprüfen"):
     performance, current_prices, stop_loss_alerts = check_portfolio_performance(portfolio, stop_loss_limits)
 
-    # Plot der Portfolio-Performance
-    st.subheader("Portfolio Performance")
-    st.line_chart(performance)
+    if performance is not None and current_prices is not None:
+        # Plot der Portfolio-Performance
+        st.subheader("Portfolio Performance")
+        st.line_chart(performance)
 
-    # Anzeige der aktuellen Preise
-    st.subheader("Aktuelle Preise")
-    st.write(current_prices)
+        # Anzeige der aktuellen Preise
+        st.subheader("Aktuelle Preise")
+        st.write(current_prices)
 
-    # Anzeige der Stopp-Loss-Warnungen
-    st.subheader("Stopp-Loss-Warnungen")
-    if stop_loss_alerts:
-        for alert in stop_loss_alerts:
-            st.warning(alert)
-    else:
-        st.success("Keine Stopp-Loss-Grenzen erreicht.")
+        # Anzeige der Stopp-Loss-Warnungen
+        st.subheader("Stopp-Loss-Warnungen")
+        if stop_loss_alerts:
+            for alert in stop_loss_alerts:
+                st.warning(alert)
+        else:
+            st.success("Keine Stopp-Loss-Grenzen erreicht.")
 
-    # Erstellen und Anzeigen des Plots
-    st.subheader("Portfolio Verteilung")
-    labels = list(portfolio.keys())
-    sizes = list(portfolio.values())
-    colors = ['gold', 'yellowgreen', 'lightcoral', 'lightskyblue', 'lightgreen', 'pink']
+        # Erstellen und Anzeigen des Plots
+        st.subheader("Portfolio Verteilung")
+        labels = list(portfolio.keys())
+        sizes = list(portfolio.values())
+        colors = ['gold', 'yellowgreen', 'lightcoral', 'lightskyblue', 'lightgreen', 'pink']
 
-    fig, ax = plt.subplots()
-    ax.pie(sizes, labels=labels, colors=colors, autopct='%1.1f%%', startangle=140)
-    ax.axis('equal')  # Equal aspect ratio ensures that pie is drawn as a circle.
-    st.pyplot(fig)
-
+        fig, ax = plt.subplots()
+        ax.pie(sizes, labels=labels, colors=colors, autopct='%1.1f%%', startangle=140)
+        ax.axis('equal')  # Equal aspect ratio ensures that pie is drawn as a circle.
+        st.pyplot(fig)
